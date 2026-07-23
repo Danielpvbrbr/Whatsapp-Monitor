@@ -39,3 +39,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+banco_whatsapp_limpo.json
+/auth_info_baileys

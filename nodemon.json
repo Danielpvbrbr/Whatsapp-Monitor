@@ -1,0 +1,9 @@
+{
+  "ignore": [
+    "banco_mensagens.json",
+    "*.json",
+    ".wwebjs_auth/**",
+    ".wwebjs_cache/**",
+    "node_modules/**"
+  ]
+}
