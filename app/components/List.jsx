@@ -1,17 +1,18 @@
 import { useState } from "react";
+import QRCode from "react-qr-code";
 
-export default function List({ contatos = [], onSelectChat }) {
+export default function List({ contatos = [], onSelectChat, qrCode, statusConexao }) {
   // 1. Criamos um estado para controlar qual aba está ativa ('pessoas' ou 'grupos')
   const [abaAtiva, setAbaAtiva] = useState("pessoas");
-
+  const [mostrarQrModal, setMostrarQrModal] = useState(false);
   // 2. CORREÇÃO: Grupos têm '@g.us'. Pessoas são todos os outros (seja '@s.whatsapp.net' ou '@lid')
   const grupos = contatos.filter((c) => c.id.includes('@g.us'));
   const pessoas = contatos.filter((c) => !c.id.includes('@g.us'));
 
   // 3. Decidimos qual lista mostrar
   const contatosExibidos = abaAtiva === "pessoas" ? pessoas : grupos;
-  console.log(contatos)
-  
+  // console.log(contatos)
+
   // Função para renderizar a linha do contato (igual à anterior)
   const renderContato = (contato) => (
     <div
@@ -51,15 +52,53 @@ export default function List({ contatos = [], onSelectChat }) {
 
   return (
     <div className="flex flex-col h-full w-full bg-white overflow-hidden">
-      {/* CABEÇALHO */}
-      <div className="h-16 bg-[#008069] flex items-center justify-between px-4 shadow-md flex-shrink-0 z-10 w-full">
+      <div className="h-16 bg-[#008069] flex items-center justify-between px-4 shadow-md flex-shrink-0 z-10 w-full relative">
         <h1 className="text-xl font-medium text-white">WhatsApp</h1>
-        <div className="flex gap-4 text-white">
+
+        <div className="flex items-center gap-4 text-white">
+          {statusConexao === "conectado" ? (
+            <span className="text-xs bg-green-600/50 px-2 py-1 rounded-md border border-green-400">
+              Online
+            </span>
+          ) : qrCode ? (
+            <button
+              onClick={() => setMostrarQrModal(!mostrarQrModal)}
+              className="text-xs bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-md font-bold shadow-sm transition-colors flex items-center gap-2"
+            >
+              Conectar
+            </button>
+          ) : (
+            <span className="text-xs text-gray-200">
+              Conectando...
+            </span>
+          )}
+
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
           </svg>
         </div>
       </div>
+
+      {/* MODAL DO QR CODE FLUTUANTE */}
+      {mostrarQrModal && qrCode && (
+        <div className="absolute top-16 right-4 z-50 bg-white p-6 rounded-lg shadow-2xl border border-gray-200 flex flex-col items-center">
+          <h3 className="text-gray-800 font-bold mb-4">Conecte seu WhatsApp</h3>
+          <div className="bg-white p-2 rounded-lg border-4 border-[#008069]">
+            <QRCode value={qrCode} size={200} />
+          </div>
+          <p className="text-xs text-gray-500 mt-4 text-center max-w-[200px]">
+            Abra o WhatsApp no seu celular, toque em "Aparelhos Conectados" e aponte a câmera.
+          </p>
+          <button
+            onClick={() => setMostrarQrModal(false)}
+            className="mt-4 text-sm text-[#008069] font-medium hover:underline"
+          >
+            Fechar aba
+          </button>
+        </div>
+      )}
+      {/* CABEÇALHO */}
+
 
       {/* SISTEMA DE ABAS (TABS) */}
       <div className="flex bg-white border-b border-gray-200 shadow-sm z-10 flex-shrink-0">

@@ -11,12 +11,16 @@ const socket = io("http://localhost:3001", {
   reconnectionDelay: 1500,
 });
 
-export default function Home() {
+export default function Home() { // <-- CHAVE ADICIONADA AQUI
   const [chats, setChats] = useState([]);
   const [chatAtivo, setChatAtivo] = useState(null);
   const [mensagens, setMensagens] = useState([]);
   const [isCarregando, setIsCarregando] = useState(true);
-
+  
+  // Novos estados do QR Code
+  const [qrCode, setQrCode] = useState(null);
+  const [statusConexao, setStatusConexao] = useState("carregando");
+  
   const intervalRef = useRef(null);
 
   const loadData = useCallback(() => {
@@ -26,6 +30,16 @@ export default function Home() {
   useEffect(() => {
     loadData();
     intervalRef.current = setInterval(loadData, 5000);
+
+    socket.on("qr_code", (qr) => {
+      setQrCode(qr);
+      setStatusConexao("aguardando_qr");
+    });
+
+    socket.on("status_conexao", (status) => {
+      setStatusConexao(status);
+      if (status === "conectado") setQrCode(null);
+    });
 
     socket.on("full_data", (data) => {
       if (data.chats) {
@@ -47,6 +61,8 @@ export default function Home() {
       clearInterval(intervalRef.current);
       socket.off("full_data");
       socket.off("nova_mensagem");
+      socket.off("qr_code");
+      socket.off("status_conexao");
     };
   }, [chatAtivo, loadData]);
 
@@ -69,7 +85,8 @@ export default function Home() {
     setMensagens((prev) => [...prev, novaMsg]);
   };
 
-  if (isCarregando) {
+  // <-- AJUSTE AQUI: O loading só aparece se não estivermos esperando o QR Code
+  if (isCarregando && statusConexao !== "aguardando_qr") {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-[#f0f2f5]">
         <div className="text-center">
@@ -83,11 +100,16 @@ export default function Home() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#f0f2f5]">
       {!chatAtivo ? (
-        <List contatos={chats} onSelectChat={abrirConversa} />
+        <List
+          contatos={chats}
+          onSelectChat={abrirConversa}
+          qrCode={qrCode}
+          statusConexao={statusConexao}
+        />
       ) : (
         <Chat
           chatName={chatAtivo.name}
-          chatAtivo={chatAtivo}           // ← Importante para foto
+          chatAtivo={chatAtivo}
           mensagens={mensagens}
           onBack={() => setChatAtivo(null)}
           onSendMessage={handleSendMessage}
@@ -95,4 +117,4 @@ export default function Home() {
       )}
     </div>
   );
-}
+} // <-- CHAVE ADICIONADA AQUI
